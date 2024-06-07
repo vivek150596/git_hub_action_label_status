@@ -1,0 +1,37 @@
+name: Label Status by gh-pages
+
+on:
+  push:
+    branches: [ pilot ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: |
+        echo 'console.log("This is a test file");' > test.js
+        node test.js
+      env:
+        CI: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install GitHub CLI
+      run: sudo apt-get install -y gh
+    - name: Authenticate GitHub CLI
+      run: gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+    - name: Label Issue
+      run: |
+        gh api \
+          -H "Accept: application/vnd.github+json" \
+          /repos/GeoToll/geotoll-automation-testing/issues/{2134636680}/labels \
+          -f labels='["testing_pending"]'
